@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Simplificado Eletrônicos</title>
+
+    <!-- PWA Manifest -->
+    <meta name="manifest-json" content='{
+      "name": "CRM Simplificado", "short_name": "CRM Simples", "description": "CRM Básico para Loja de Eletrônicos.",
+      "start_url": "/", "scope": "/", "display": "standalone",
+      "background_color": "#ffffff", "theme_color": "#007bff",
+      "icons": [{"src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…", "type": "image/png", "sizes": "192x192"}, {"src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA…", "type": "image/png", "sizes": "512x512"}]
+    }'>
+    <!-- Using SVG favicon for simplicity -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>" />
+
+    <!-- CSS -->
+    <style>
+        /* Import Font, Icons, Libraries */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/Toastify.min.css');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/tabulator-tables/5.5.2/css/tabulator.min.css');
+
+        /* --- CSS Variables --- */
+        :root {
+            --font-family: 'Inter', sans-serif;
+            --primary-color: #007bff; --primary-color-rgb: 0, 123, 255;
+            --secondary-color: #6c757d; --secondary-color-rgb: 108, 121, 129;
+            --accent-color: #ffc107; --accent-color-rgb: 255, 193, 7;
+            --background-light: #f8f9fa; --surface-light: #ffffff;
+            --text-light: #212529; --text-muted-light: #6c757d;
+            --border-color-light: #dee2e6;
+            --danger-color: #dc3545; --danger-color-rgb: 220, 53, 69;
+            --success-color: #28a745; --success-color-rgb: 40, 167, 69;
+            --warning-color: #ffc107; --warning-color-rgb: 255, 193, 7;
+
+            --background-dark: #121212; --surface-dark: #1e1e1e;
+            --text-dark: #e0e0e0; --text-muted-dark: #aaaaaa;
+            --border-color-dark: #444444;
+            --primary-color-dark: #bb86fc; --primary-color-dark-rgb: 187, 134, 252;
+
+            --default-padding: 15px; --default-margin: 15px;
+            --border-radius: 5px;
+
+            color-scheme: light dark; /* Enable light/dark mode switching */
+        }
+        body.dark-mode {
+            --primary-color: var(--primary-color-dark); --primary-color-rgb: var(--primary-color-dark-rgb);
+            --background-light: var(--background-dark); --surface-light: var(--surface-dark);
+            --text-light: var(--text-dark); --text-muted-light: var(--text-muted-dark);
+            --border-color-light: var(--border-color-dark);
+        }
+
+        /* --- Base Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+        body {
+            display: flex; min-height: 100vh; background-color: var(--background-light); color: var(--text-light);
+            transition: background-color 0.3s ease, color 0.3s ease; overflow: hidden; font-size: 14px;
+        }
+        /* Accessibility: Hide visually but keep for screen readers */
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        /* WCAG Focus Indicators */
+        *:focus { outline: 2px solid var(--primary-color); outline-offset: 2px; box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.3); }
+        body.dark-mode *:focus { box-shadow: 0 0 0 3px rgba(var(--primary-color-dark-rgb), 0.5); }
+        *:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+        *:focus-visible { outline-style: solid; }
+
+        /* --- Layout --- */
+        #app-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
+        #sidebar {
+            width: 220px; background-color: var(--surface-light); border-right: 1px solid var(--border-color-light);
+            padding: var(--default-padding); display: flex; flex-direction: column; flex-shrink: 0;
+            overflow-y: auto; transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        #sidebar .logo { font-size: 1.6em; font-weight: 700; color: var(--primary-color); text-align: center; margin-bottom: var(--default-margin); padding-bottom: var(--default-padding); border-bottom: 1px solid var(--border-color-light); }
+        #sidebar nav ul { list-style: none; }
+        #sidebar nav li { margin-bottom: 10px; }
+        #sidebar nav a {
+            text-decoration: none; color: var(--text-muted-light); display: flex; align-items: center; padding: 10px 15px;
+            border-radius: var(--border-radius); transition: all 0.3s ease; font-weight: 500;
+        }
+        #sidebar nav a:hover, #sidebar nav a.active { background-color: rgba(var(--primary-color-rgb), 0.1); color: var(--primary-color); transform: translateX(5px); }
+        body.dark-mode #sidebar nav a:hover, body.dark-mode #sidebar nav a.active { background-color: rgba(var(--primary-color-dark-rgb), 0.15); color: var(--primary-color-dark); }
+        #sidebar nav i { margin-right: 15px; width: 20px; text-align: center; }
+        #main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: calc(var(--default-padding) * 2); }
+        #header { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(var(--default-margin) * 2); padding-bottom: var(--default-padding); border-bottom: 1px solid var(--border-color-light); }
+        #header h1 { font-size: 2em; color: var(--primary-color); }
+        body.dark-mode #header h1 { color: var(--primary-color-dark); }
+        #header-actions { display: flex; gap: 10px; }
+        .controls-bar {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--default-margin);
+            padding: 10px; background-color: var(--surface-light); border: 1px solid var(--border-color-light);
+            border-radius: var(--border-radius); flex-wrap: wrap; gap: 10px;
+        }
+        body.dark-mode .controls-bar { background-color: var(--surface-dark); border-color: var(--border-color-dark); }
+        .controls-bar .search-filter-sort { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .controls-bar input[type="search"], .controls-bar select, .controls-bar input[type="date"] {
+            padding: 8px 12px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius);
+            background-color: var(--surface-light); color: var(--text-light); min-width: 150px;
+        }
+        body.dark-mode .controls-bar input, body.dark-mode .controls-bar select {
+            background-color: var(--surface-dark); border-color: var(--border-color-dark); color: var(--text-dark);
+        }
+        .controls-bar button, .button-group button {
+            padding: 8px 15px; border: 1px solid var(--border-color-light); background-color: var(--surface-light);
+            color: var(--primary-color); border-radius: var(--border-radius); cursor: pointer; transition: all 0.3s ease;
+            font-weight: 500; white-space: nowrap;
+        }
+        body.dark-mode .controls-bar button, body.dark-mode .button-group button {
+             background-color: var(--surface-dark); border-color: var(--border-color-dark); color: var(--primary-color-dark);
+        }
+        .controls-bar button:hover, .button-group button:hover { background-color: rgba(var(--primary-color-rgb), 0.1); border-color: var(--primary-color); }
+        body.dark-mode .controls-bar button:hover, body.dark-mode .button-group button:hover { background-color: rgba(var(--primary-color-dark-rgb), 0.15); border-color: var(--primary-color-dark); }
+        .controls-bar button.danger { color: var(--danger-color); border-color: var(--danger-color); }
+        .controls-bar button.danger:hover { background-color: rgba(var(--danger-color-rgb), 0.1); }
+        .controls-bar button.secondary { color: var(--secondary-color); border-color: var(--secondary-color); }
+        .controls-bar button.secondary:hover { background-color: rgba(var(--secondary-color-rgb), 0.1); }
+
+        /* --- Modals --- */
+        dialog {
+            background-color: var(--surface-light); border: 1px solid var(--border-color-light); border-radius: var(--border-radius);
+            padding: calc(var(--default-padding) * 2); max-width: 600px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode dialog { background-color: var(--surface-dark); border-color: var(--border-color-dark); }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.5); transition: background-color 0.3s ease; }
+        body.dark-mode dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
+        dialog .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color-light); padding-bottom: var(--default-padding); margin-bottom: var(--default-margin); }
+        body.dark-mode dialog .modal-header { border-bottom: 1px solid var(--border-color-dark); }
+        dialog .modal-header h2 { font-size: 1.5em; color: var(--primary-color); }
+        body.dark-mode dialog .modal-header h2 { color: var(--primary-color-dark); }
+        dialog .modal-header .close-button { background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-muted-light); padding: 0 10px; }
+        body.dark-mode dialog .modal-header .close-button { color: var(--text-muted-dark); }
+        dialog .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: var(--default-padding); border-top: 1px solid var(--border-color-light); margin-top: var(--default-margin); }
+        body.dark-mode dialog .modal-footer { border-top: 1px solid var(--border-color-dark); }
+
+        /* --- Form Styles --- */
+        .form-group { margin-bottom: var(--default-margin); }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-muted-light); }
+        body.dark-mode .form-group label { color: var(--text-muted-dark); }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 15px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius);
+            background-color: var(--surface-light); color: var(--text-light); transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        body.dark-mode .form-group input, body.dark-mode .form-group textarea, body.dark-mode .form-group select {
+            background-color: var(--surface-dark); border-color: var(--border-color-dark); color: var(--text-dark);
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2); }
+        body.dark-mode .form-group input:focus, body.dark-mode .form-group textarea:focus, body.dark-mode .form-group select:focus { border-color: var(--primary-color-dark); }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+
+        /* --- Charts --- */
+        .chart-container { background-color: var(--surface-light); padding: var(--default-padding); border-radius: var(--border-radius); border: 1px solid var(--border-color-light); margin-bottom: var(--default-margin); height: 300px; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        body.dark-mode .chart-container { background-color: var(--surface-dark); border-color: var(--border-color-dark); }
+
+        /* --- Dashboard Metrics --- */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--default-margin); margin-bottom: calc(var(--default-margin) * 2); }
+        .metric-card { background-color: var(--surface-light); padding: var(--default-padding); border-radius: var(--border-radius); border: 1px solid var(--border-color-light); text-align: center; transition: background-color 0.3s ease, border-color 0.3s ease; min-height: 120px; display: flex; flex-direction: column; justify-content: center;}
+        body.dark-mode .metric-card { background-color: var(--surface-dark); border-color: var(--border-color-dark); }
+        .metric-card .metric-label { font-size: 0.9em; color: var(--text-muted-light); margin-bottom: 5px; }
+        body.dark-mode .metric-card .metric-label { color: var(--text-muted-dark); }
+        .metric-card .metric-value { font-size: 1.6em; font-weight: 700; color: var(--primary-color); }
+        body.dark-mode .metric-card .metric-value { color: var(--primary-color-dark); }
+
+        /* --- Utility & Misc --- */
+        .hidden { display: none !important; }
+        .status-danger { color: var(--danger-color); font-weight: 500; }
+        .status-success { color: var(--success-color); font-weight: 500; }
+        .status-warning { color: var(--warning-color); font-weight: 500; }
+        .status-primary { color: var(--primary-color); font-weight: 500; }
+        .status-accent { color: var(--accent-color); font-weight: 500; }
+        .status-muted { color: var(--text-muted-light); }
+        body.dark-mode .status-muted { color: var(--text-muted-dark); }
+        #theme-toggle { background: none; border: none; cursor: pointer; font-size: 1.5em; color: var(--text-muted-light); padding: 5px; }
+        body.dark-mode #theme-toggle { color: var(--text-muted-dark); }
+        #theme-toggle:hover { color: var(--primary-color); }
+        body.dark-mode #theme-toggle:hover { color: var(--primary-color-dark); }
+        #test-panel-toggle { position: fixed; top: 100px; right: -30px; width: 80px; padding: 10px 5px; background-color: var(--primary-color); color: white; border: none; border-radius: 5px 0 0 5px; cursor: pointer; z-index: 1000; transform: rotate(-90deg); transform-origin: right center; transition: all 0.3s ease; }
+        body.dark-mode #test-panel-toggle { background-color: var(--primary-color-dark); }
+        #test-panel { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background-color: var(--surface-light); border-left: 1px solid var(--border-color-light); padding: calc(var(--default-padding) * 2); z-index: 999; transition: right 0.3s ease-in-out; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
+        body.dark-mode #test-panel { background-color: var(--surface-dark); border-left: 1px solid var(--border-color-dark); }
+        #test-panel.visible { right: 0; }
+        #test-panel h3 { margin-bottom: var(--default-margin); border-bottom: 1px solid var(--border-color-light); padding-bottom: 10px; }
+        body.dark-mode #test-panel h3 { border-bottom: 1px solid var(--border-color-dark); }
+        #test-panel li { margin-bottom: 10px; }
+        #test-panel li span:first-child { font-weight: bold; margin-right: 10px; }
+        #test-panel li.ok span:last-child { color: var(--success-color); }
+        #test-panel li.error span:last-child { color: var(--danger-color); }
+        #test-panel li.warning span:last-child { color: var(--warning-color); }
+
+        /* --- Tabulator Specific Styles --- */
+        .tabulator .tabulator-row .tabulator-cell .action-button { margin: 0 2px; padding: 4px 8px; font-size: 0.9em; cursor: pointer; border: none; background: none; color: var(--text-muted-light); }
+        .tabulator .tabulator-row .tabulator-cell .action-button:hover { color: var(--primary-color); }
+        .tabulator .tabulator-row .tabulator-cell .action-button.danger { color: var(--danger-color); }
+        .tabulator .tabulator-row .tabulator-cell .action-button.danger:hover { color: var(--danger-color); background-color: rgba(var(--danger-color-rgb), 0.1); }
+        .tabulator .tabulator-header { background-color: var(--surface-light); }
+        body.dark-mode .tabulator .tabulator-header { background-color: var(--surface-dark); }
+        .tabulator .tabulator-footer { background-color: var(--surface-light); border-top: 1px solid var(--border-color-light); }
+        body.dark-mode .tabulator .tabulator-footer { background-color: var(--surface-dark); border-top: 1px solid var(--border-color-dark); }
+
+        /* Order Items Table within Modal */
+        #order-items-list { margin-top: 10px; }
+        #order-items-list .order-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 10px; padding: 10px; border-bottom: 1px solid var(--border-color-light); align-items: center; font-size: 0.9em; }
+        body.dark-mode #order-items-list .order-item { border-bottom: 1px solid var(--border-color-dark); }
+        #order-items-list .order-item:last-child { border-bottom: none; }
+        #order-items-list .order-item.empty { text-align: center; color: var(--text-muted-light); grid-column: 1 / -1; padding: 20px; }
+        #order-items-list .order-item span.item-actions button { padding: 5px; }
+        .order-item-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 10px; font-weight: bold; color: var(--primary-color); padding: 5px 10px; border-bottom: 2px solid var(--primary-color); }
+        body.dark-mode .order-item-header { border-bottom: 2px solid var(--primary-color-dark); }
+        .order-item .item-actions button { background: transparent; border: none; cursor: pointer; color: var(--text-muted-light); }
+        .order-item .item-actions button:hover { color: var(--primary-color); }
+        .order-item .item-actions button.danger { color: var(--danger-color); }
+        .order-item .item-actions button.danger:hover { color: var(--danger-color); background-color: rgba(var(--danger-color-rgb), 0.1); }
+
+        /* --- Pagination --- */
+        .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .pagination-controls button, .pagination-controls select {
+            padding: 6px 12px; font-size: 0.9em; cursor: pointer; border-radius: var(--border-radius); border: 1px solid var(--border-color-light);
+            background-color: var(--surface-light); color: var(--primary-color);
+        }
+        body.dark-mode .pagination-controls button, body.dark-mode .pagination-controls select {
+            background-color: var(--surface-dark); border-color: var(--border-color-dark); color: var(--primary-color-dark);
+        }
+        .pagination-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            #sidebar { width: 180px; }
+            #main-content { padding: var(--default-padding); }
+            .controls-bar { flex-direction: column; align-items: flex-start; }
+            .controls-bar .search-filter-sort, .controls-bar .table-actions { width: 100%; justify-content: space-between; }
+        }
+        /* --- Reduced Motion --- */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transform: none !important; transition: none !important; scroll-behavior: auto !important; }
+            #sidebar nav a { transform: none !important; }
+            #test-panel-toggle, #test-panel { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Test Panel -->
+    <button id="test-panel-toggle">Test Panel</button>
+    <div id="test-panel">
+        <h3>Test Panel</h3>
+        <ul id="test-results">
+            <li id="sw-status"><span>Service Worker:</span> <span>Initializing...</span></li>
+            <li id="db-status"><span>IndexedDB:</span> <span>Initializing...</span></li>
+            <li id="chart-status"><span>Charts:</span> <span>Not Loaded</span></li>
+            <li id="accessibility-status"><span>Accessibility:</span> <span>Checking...</span></li>
+        </ul>
+        <hr style="border-color: var(--border-color-light); margin: 20px 0;">
+        <label for="fake-data-input">Trocar Base (CSV):</label>
+        <input type="file" id="fake-data-input" accept=".csv" style="margin-bottom: 10px; display: block; width: 100%;">
+        <button id="download-example-csv">Baixar CSV Exemplo</button>
+        <button id="reset-db-button" class="danger" style="width: 100%; margin-top: 10px;">Resetar Banco</button>
+        <button id="reload-page-button" style="width: 100%; margin-top: 10px;">Recarregar Página</button>
+        <button id="save-snapshot-button" style="width: 100%; margin-top: 10px;">Salvar Cenário</button>
+    </div>
+
+    <!-- App Container -->
+    <div id="app-container">
+
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="logo">CRM<span style="color: var(--accent-color);">Simples</span></div>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard" title="Visão Geral"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+                    <li><a href="#customers" title="Gerenciar Clientes"><i class="fas fa-users"></i><span>Clientes</span></a></li>
+                    <li><a href="#products" title="Gerenciar Produtos"><i class="fas fa-box"></i><span>Produtos</span></a></li>
+                    <li><a href="#orders" title="Gerenciar Pedidos"><i class="fas fa-shopping-cart"></i><span>Pedidos</span></a></li>
+                    <li><a href="#settings" title="Configurações"><i class="fas fa-cog"></i><span>Configurações</span></a></li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto; text-align: center; font-size: 0.8em; color: var(--text-muted-light);">CRM v1.0</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <header id="header">
+                <h1 id="page-title">Dashboard</h1>
+                <div id="header-actions">
+                    <div class="button-group">
+                        <button id="theme-toggle" title="Alternar Tema"><i class="fas fa-moon"></i></button>
+                        <select id="language-selector" title="Selecionar Idioma">
+                            <option value="pt-BR">Português (BR)</option> <option value="en-US">English (US)</option> <option value="es-ES">Español (ES)</option>
+                        </select>
+                    </div>
+                    <button class="secondary">Usuário (Admin)</button>
+                </div>
+            </header>
+
+            <div id="content-area">
+                <!-- Dashboard -->
+                <section id="dashboard" class="view-section">
+                    <div class="controls-bar">
+                        <div class="search-filter-sort">
+                            <input type="search" id="dashboard-search" placeholder="Filtrar métricas...">
+                            <select id="dashboard-period"><option value="month">Mês</option><option value="week">Semana</option><option value="day">Dia</option></select>
+                        </div>
+                        <div class="table-actions"><button id="refresh-dashboard"><i class="fas fa-sync-alt"></i> Atualizar</button></div>
+                    </div>
+                    <h2>Visão Geral</h2>
+                    <div class="dashboard-grid">
+                        <div class="metric-card"><div class="metric-label">Receita Total</div><div class="metric-value" id="metric-total-revenue">R$ 0,00</div></div>
+                        <div class="metric-card"><div class="metric-label">Ticket Médio</div><div class="metric-value" id="metric-avg-ticket">R$ 0,00</div></div>
+                        <div class="metric-card"><div class="metric-label">Unidades Vendidas</div><div class="metric-value" id="metric-units-sold">0</div></div>
+                        <div class="metric-card"><div class="metric-label">Margem Bruta</div><div class="metric-value" id="metric-gross-margin">0.00%</div></div>
+                        <div class="metric-card"><div class="metric-label">Taxa Devolução</div><div class="metric-value" id="metric-return-rate">0.00%</div></div>
+                        <div class="metric-card"><div class="metric-label">CAC Estimado</div><div class="metric-value" id="metric-cac">R$ 0,00</div></div>
+                        <div class="metric-card"><div class="metric-label">LTV Simples</div><div class="metric-value" id="metric-ltv">R$ 0,00</div></div>
+                    </div>
+                    <h4>Receita por Canal (Mês)</h4>
+                    <div class="chart-container"><canvas id="revenueByChannelChart"></canvas></div>
+                    <h4>Vendas Diárias (Últimos 30 Dias)</h4>
+                    <div class="chart-container"><canvas id="dailySalesChart"></canvas></div>
+                    <h4>Produtos Mais Vendidos (Mês)</h4>
+                    <div id="top-products-table"></div>
+                </section>
+
+                <!-- Customers -->
+                <section id="customers" class="view-section hidden">
+                    <div class="controls-bar">
+                        <div class="search-filter-sort">
+                            <input type="search" id="customer-search" placeholder="Buscar Clientes...">
+                            <select id="customer-filter-status"><option value="">Todos Status</option><option value="active">Ativo</option><option value="inactive">Inativo</option></select>
+                            <select id="customer-sort"><option value="name">Nome</option><option value="createdAt">Data Cadastro</option></select>
+                        </div>
+                        <div class="table-actions">
+                            <button id="btn-create-customer"><i class="fas fa-plus"></i> Novo</button>
+                            <button id="btn-import-csv-cust"><i class="fas fa-upload"></i> Importar CSV</button>
+                            <button id="btn-export-csv-cust"><i class="fas fa-download"></i> Exportar CSV</button>
+                        </div>
+                    </div>
+                    <div id="customer-table"></div>
+                    <div id="customer-pagination" class="pagination-controls"></div>
+                </section>
+
+                <!-- Products -->
+                <section id="products" class="view-section hidden">
+                    <div class="controls-bar">
+                        <div class="search-filter-sort">
+                            <input type="search" id="product-search" placeholder="Buscar Produtos...">
+                            <select id="product-filter-category"> <option value="">Categorias</option> </select>
+                            <select id="product-filter-brand"> <option value="">Marcas</option> </select>
+                            <select id="product-sort"><option value="name">Nome</option><option value="price">Preço</option><option value="stock">Estoque</option></select>
+                        </div>
+                        <div class="table-actions">
+                            <button id="btn-create-product"><i class="fas fa-plus"></i> Novo</button>
+                            <button id="btn-import-csv-prod"><i class="fas fa-upload"></i> Importar CSV</button>
+                            <button id="btn-export-csv-prod"><i class="fas fa-download"></i> Exportar CSV</button>
+                        </div>
+                    </div>
+                    <div id="product-table"></div>
+                    <div id="product-pagination" class="pagination-controls"></div>
+                </section>
+
+                <!-- Orders -->
+                <section id="orders" class="view-section hidden">
+                    <div class="controls-bar">
+                        <div class="search-filter-sort">
+                            <input type="search" id="order-search" placeholder="Buscar Pedidos (ID, Cliente)...">
+                            <select id="order-filter-status"><option value="">Todos Status</option><option value="pending">Pendente</option><option value="processing">Processando</option><option value="shipped">Enviado</option><option value="delivered">Entregue</option><option value="canceled">Cancelado</option></select>
+                            <input type="date" id="order-filter-date-start" title="Data Inicial"> <input type="date" id="order-filter-date-end" title="Data Final">
+                            <select id="order-sort"><option value="orderDate">Data</option><option value="totalAmount">Valor</option><option value="customerId">Cliente</option></select>
+                        </div>
+                        <div class="table-actions">
+                            <button id="btn-create-order"><i class="fas fa-plus"></i> Novo</button>
+                        </div>
+                    </div>
+                    <div id="order-table"></div>
+                    <div id="order-pagination" class="pagination-controls"></div>
+                </section>
+
+                <!-- Settings -->
+                <section id="settings" class="view-section hidden">
+                    <h2>Configurações</h2>
+                    <div class="form-group">
+                        <label for="setting-theme-select">Tema:</label>
+                        <select id="setting-theme-select">
+                            <option value="system">Seguir Sistema</option> <option value="light">Claro</option> <option value="dark">Escuro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setting-lang-select">Idioma:</label>
+                        <select id="setting-lang-select">
+                            <option value="pt-BR">Português (BR)</option> <option value="en-US">English (US)</option> <option value="es-ES">Español (ES)</option>
+                        </select>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <!-- Customer Modal -->
+        <dialog id="modal-customer">
+            <div class="modal-header"><h2 id="modal-customer-title"></h2><button class="close-button" onclick="document.getElementById('modal-customer').close();"><i class="fas fa-times"></i></button></div>
+            <div class="modal-content">
+                <form id="form-customer">
+                    <input type="hidden" id="customer-id">
+                    <div class="form-group"><label for="customer-name">Nome</label><input type="text" id="customer-name" required></div>
+                    <div class="form-group"><label for="customer-email">Email</label><input type="email" id="customer-email" required></div>
+                    <div class="form-group"><label for="customer-phone">Telefone</label><input type="text" id="customer-phone"></div>
+                    <div class="form-group"><label for="customer-address">Endereço</label><textarea id="customer-address"></textarea></div>
+                    <div class="form-group"><label for="customer-status">Status</label><select id="customer-status"><option value="active">Ativo</option><option value="inactive">Inativo</option></select></div>
+                    <div class="form-group"><label for="customer-createdAt">Data Cadastro</label><input type="datetime-local" id="customer-createdAt" readonly></div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="document.getElementById('modal-customer').close();">Cancelar</button>
+                        <button type="submit" class="primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Product Modal -->
+        <dialog id="modal-product">
+            <div class="modal-header"><h2 id="modal-product-title"></h2><button class="close-button" onclick="document.getElementById('modal-product').close();"><i class="fas fa-times"></i></button></div>
+            <div class="modal-content">
+                <form id="form-product">
+                    <input type="hidden" id="product-id">
+                    <div class="form-group"><label for="product-sku">SKU</label><input type="text" id="product-sku" required></div>
+                    <div class="form-group"><label for="product-name">Nome</label><input type="text" id="product-name" required></div>
+                    <div class="form-group"><label for="product-description">Descrição</label><textarea id="product-description"></textarea></div>
+                    <div class="form-group"><label for="product-category">Categoria</label><select id="product-category" data-load-options-for="categories" required></select></div>
+                    <div class="form-group"><label for="product-brand">Marca</label><select id="product-brand" data-load-options-for="brands" required></select></div>
+                    <div class="form-group"><label for="product-price">Preço</label><input type="number" id="product-price" step="0.01" required></div>
+                    <div class="form-group"><label for="product-cost">Custo</label><input type="number" id="product-cost" step="0.01" required></div>
+                    <div class="form-group"><label for="product-stock">Estoque</label><input type="number" id="product-stock" required></div>
+                    <div class="form-group"><label for="product-createdAt">Data Cadastro</label><input type="datetime-local" id="product-createdAt" readonly></div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="document.getElementById('modal-product').close();">Cancelar</button>
+                        <button type="submit" class="primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Order Modal -->
+        <dialog id="modal-order">
+            <div class="modal-header"><h2 id="modal-order-title"></h2><button class="close-button" onclick="document.getElementById('modal-order').close();"><i class="fas fa-times"></i></button></div>
+            <div class="modal-content">
+                <form id="form-order">
+                    <input type="hidden" id="order-id">
+                    <div class="form-group"><label for="order-customer-id">Cliente</label><select id="order-customer-id" data-load-options-for="customers" required></select></div>
+                    <div class="form-group"><label for="order-date">Data</label><input type="datetime-local" id="order-date" required></div>
+                    <div class="form-group"><label for="order-status">Status</label><select id="order-status"><option value="pending">Pendente</option><option value="processing">Processando</option><option value="shipped">Enviado</option><option value="delivered">Entregue</option><option value="canceled">Cancelado</option></select></div>
+                    <div class="form-group"><label for="order-channel">Canal</label><select id="order-channel" data-load-options-for="channels"></select></div>
+
+                    <h4>Itens do Pedido</h4>
+                    <div class="order-item-header"><span>Produto</span><span>Qtd</span><span>Preço Unit.</span><span>Subtotal</span><span>Ações</span></div>
+                    <div id="order-items-list"></div>
+                    <button type="button" id="btn-add-order-item" class="secondary" style="margin-top: 10px;"><i class="fas fa-plus"></i> Adicionar Item</button>
+
+                    <hr style="margin: 20px 0;">
+                    <div class="form-group"><label for="order-discount">Desconto (%)</label><input type="number" id="order-discount" step="0.1" value="0"></div>
+                    <div class="form-group"> <label>Valor Bruto:</label> <span id="order-subtotal-display">R$ 0,00</span> </div>
+                    <div class="form-group"> <label>Valor Desconto:</label> <span id="order-discount-amount-display">R$ 0,00</span> </div>
+                    <div class="form-group"> <label>Impostos (10% sim.):</label> <span id="order-tax-display">R$ 0,00</span> </div>
+                    <div class="form-group" style="font-size: 1.2em; font-weight: bold;"> <label>Valor Total:</label> <span id="order-total-display">R$ 0,00</span> </div>
+                    <div class="form-group"><label for="order-notes">Observações</label><textarea id="order-notes"></textarea></div>
+
+                    <div class="modal-footer">
+                        <button type="button" onclick="document.getElementById('modal-order').close();">Cancelar</button>
+                        <button type="submit" class="primary">Salvar Pedido</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Order Item Editor Modal -->
+        <dialog id="modal-order-item">
+            <div class="modal-header"><h2 id="modal-order-item-title"></h2><button class="close-button" onclick="document.getElementById('modal-order-item').close();"><i class="fas fa-times"></i></button></div>
+            <div class="modal-content">
+                <form id="form-order-item">
+                    <input type="hidden" id="order-item-id">
+                    <div class="form-group"><label for="item-product-id">Produto</label><select id="item-product-id" data-load-options-for="products" required></select></div>
+                    <div class="form-group"><label for="item-quantity">Quantidade</label><input type="number" id="item-quantity" step="1" min="1" required></div>
+                    <div class="form-group"><label for="item-unit-price">Preço Unit.</label><input type="number" id="item-unit-price" step="0.01" required></div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="document.getElementById('modal-order-item').close();">Cancelar</button>
+                        <button type="submit" class="primary">Adicionar/Atualizar</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+    </div> <!-- /app-container -->
+
+    <!-- JavaScript -->
+    <script id="main-script" type="module">
+        // =========================================================================
+        // Configurações Globais e Referências DOM
+        // =========================================================================
+        const CONFIG = {
+            dbName: 'crm_simplified_db', dbVersion: 2,
+            snapshotFileName: 'crm_snapshot.json', exampleCsvFileName: 'crm_exemplo.csv',
+            defaultLang: 'pt-BR', themePreferenceStorage: 'crmThemePreference',
+            initialDataLoadSize: 25, // Pagination default
+            dateLocaleMap: { 'pt-BR': 'pt-BR', 'en-US': 'en-US', 'es-ES': 'es-ES' },
+            currencyFormatMap: {
+                 'pt-BR': { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 },
+                 'en-US': { style: 'currency', currency: 'USD', minimumFractionDigits: 2 },
+                 'es-ES': { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 } // Example EUR
+            },
+            numberFormatMap: { 'pt-BR': { minimumFractionDigits: 2, maximumFractionDigits: 2 }, 'en-US': { minimumFractionDigits: 2, maximumFractionDigits: 2 }, 'es-ES': { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
+            dateFormatMap: { 'pt-BR': { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, 'en-US': { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, 'es-ES': { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' } }
+        };
+
+        // DOM References
+        const sidebarLinks = document.querySelectorAll('#sidebar nav a');
+        const contentArea = document.getElementById('content-area');
+        const pageTitle = document.getElementById('page-title');
+        const themeToggle = document.getElementById('theme-toggle');
+        const langSelector = document.getElementById('language-selector');
+        const testPanelToggle = document.getElementById('test-panel-toggle');
+        const testPanel = document.getElementById('test-panel');
+        const swStatusEl = document.getElementById('sw-status').querySelector('span:last-child');
+        const dbStatusEl = document.getElementById('db-status').querySelector('span:last-child');
+        const chartStatusEl = document.getElementById('chart-status').querySelector('span:last-child');
+        const accStatusEl = document.getElementById('accessibility-status').querySelector('span:last-child');
+        const resetDbButton = document.getElementById('reset-db-button');
+        const reloadPageButton = document.getElementById('reload-page-button');
+        const downloadExampleCsvButton = document.getElementById('download-example-csv');
+        const uploadFakeDataInput = document.getElementById('fake-data-input');
+        const saveSnapshotButton = document.getElementById('save-snapshot-button');
+
+        // Global State
+        let currentLang = CONFIG.defaultLang;
+        let currentTheme = localStorage.getItem('crmThemePreference') || 'system';
+        let dbInstance = null;
+        let PWAInfo = { registered: false, controller: null };
+        let ChartInstances = {};
+        let TabulatorInstances = {};
+        let currentView = '';
+        let paginationState = {}; // { viewName: { page: 1, pageSize: 25, filters: {}, sort: {} } }
+        let allDataCache = {}; // Cache for lookups (categories, brands, etc.)
+
+        // =========================================================================
+        // Módulo de Internacionalização (i18n)
+        // =========================================================================
+        const i18n = (() => {
+            const translations = {
+                'pt-BR': {
+                    dashboard: 'Dashboard', customers: 'Clientes', products: 'Produtos', orders: 'Pedidos',
+                    settings: 'Configurações',
+                    modalTitleCustomerNew: 'Novo Cliente', modalTitleCustomerEdit: 'Editar Cliente',
+                    modalTitleProductNew: 'Novo Produto', modalTitleProductEdit: 'Editar Produto',
+                    modalTitleOrderNew: 'Novo Pedido', modalTitleOrderEdit: 'Editar Pedido',
+                    modalTitleOrderItemAdd: 'Adicionar Item', modalTitleOrderItemEdit: 'Editar Item',
+                    save: 'Salvar', cancel: 'Cancelar', close: 'Fechar', delete: 'Excluir', edit: 'Editar',
+                    duplicate: 'Duplicar', add: 'Adicionar', importCsv: 'Importar CSV', exportCsv: 'Exportar CSV', downloadExample: 'Baixar Exemplo',
+                    searchPlaceholder: 'Pesquisar...', filter: 'Filtrar', sort: 'Ordenar', refresh: 'Atualizar',
+                    confirmDelete: 'Tem certeza que deseja excluir este item?', yes: 'Sim', no: 'Não', success: 'Sucesso!', error: 'Erro!', warning: 'Atenção!',
+                    dataSaved: 'Dados salvos com sucesso!', dataDeleted: 'Item excluído com sucesso!', dataImported: 'Dados importados com sucesso!', dataExported: 'Dados exportados com sucesso!',
+                    invalidCsv: 'Arquivo CSV inválido.', dbReset: 'Banco de dados resetado.', loading: 'Carregando...', noData: 'Nenhum dado encontrado.',
+                    statusPending: 'Pendente', statusProcessing: 'Processando', statusShipped: 'Enviado', statusDelivered: 'Entregue',
+                    statusCanceled: 'Cancelado', statusOpen: 'Aberto', statusInProgress: 'Em Andamento', statusResolved: 'Resolvido',
+                    statusClosed: 'Fechado', statusActive: 'Ativo', statusInactive: 'Inativo',
+                    priorityLow: 'Baixa', priorityMedium: 'Média', priorityHigh: 'Alta', priorityUrgent: 'Urgente',
+                    themeLight: 'Claro', themeDark: 'Escuro', themeSystem: 'Seguir Sistema',
+                },
+                'en-US': {
+                    dashboard: 'Dashboard', customers: 'Customers', products: 'Products', orders: 'Orders',
+                    settings: 'Settings',
+                    modalTitleCustomerNew: 'New Customer', modalTitleCustomerEdit: 'Edit Customer',
+                    modalTitleProductNew: 'New Product', modalTitleProductEdit: 'Edit Product',
+                    modalTitleOrderNew: 'New Order', modalTitleOrderEdit: 'Edit Order',
+                    modalTitleOrderItemAdd: 'Add Item', modalTitleOrderItemEdit: 'Edit Item',
+                    save: 'Save', cancel: 'Cancel', close: 'Close', delete: 'Delete', edit: 'Edit',
+                    duplicate: 'Duplicate', add: 'Add', importCsv: 'Import CSV', exportCsv: 'Export CSV', downloadExample: 'Download Example',
+                    searchPlaceholder: 'Search...', filter: 'Filter', sort: 'Sort', refresh: 'Refresh',
+                    confirmDelete: 'Are you sure you want to delete this item?', yes: 'Yes', no: 'No', success: 'Success!', error: 'Error!', warning: 'Warning!',
+                    dataSaved: 'Data saved successfully!', dataDeleted: 'Item deleted successfully!', dataImported: 'Data imported successfully!', dataExported: 'Data exported successfully!',
+                    invalidCsv: 'Invalid CSV file.', dbReset: 'Database reset.', loading: 'Loading...', noData: 'No data found.',
+                    statusPending: 'Pending', statusProcessing: 'Processing', statusShipped: 'Shipped', statusDelivered: 'Delivered',
+                    statusCanceled: 'Canceled', statusOpen: 'Open', statusInProgress: 'In Progress', statusResolved: 'Resolved',
+                    statusClosed: 'Closed', statusActive: 'Active', statusInactive: 'Inactive',
+                    priorityLow: 'Low', priorityMedium: 'Medium', priorityHigh: 'High', priorityUrgent: 'Urgent',
+                    themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System',
+                },
+                'es-ES': {
+                    dashboard: 'Panel', customers: 'Clientes', products: 'Productos', orders: 'Pedidos',
+                    settings: 'Configuración',
+                    modalTitleCustomerNew: 'Nuevo Cliente', modalTitleCustomerEdit: 'Editar Cliente',
+                    modalTitleProductNew: 'Nuevo Producto', modalTitleProductEdit: 'Editar Producto',
+                    modalTitleOrderNew: 'Nuevo Pedido', modalTitleOrderEdit: 'Editar Pedido',
+                    modalTitleOrderItemAdd: 'Añadir Artículo', modalTitleOrderItemEdit: 'Editar Artículo',
+                    save: 'Guardar', cancel: 'Cancelar', close: 'Cerrar', delete: 'Eliminar', edit: 'Editar',
+                    duplicate: 'Duplicar', add: 'Añadir', importCsv: 'Importar CSV', exportCsv: 'Exportar CSV', downloadExample: 'Descargar Ejemplo',
+                    searchPlaceholder: 'Buscar...', filter: 'Filtrar', sort: 'Ordenar', refresh: 'Actualizar',
+                    confirmDelete: '¿Estás seguro de que quieres eliminar este elemento?', yes: 'Sí', no: 'No', success: '¡Éxito!', error: '¡Error!', warning: '¡Advertencia!',
+                    dataSaved: 'Datos guardados correctamente!', dataDeleted: 'Elemento eliminado correctamente!', dataImported: 'Datos importados correctamente!', dataExported: 'Datos exportados correctamente!',
+                    invalidCsv: 'Archivo CSV inválido.', dbReset: 'Base de datos reseteada.', loading: 'Cargando...', noData: 'No se encontraron datos.',
+                    statusPending: 'Pendiente', statusProcessing: 'Procesando', statusShipped: 'Enviado', statusDelivered: 'Entregado',
+                    statusCanceled: 'Cancelado', statusOpen: 'Abierto', statusInProgress: 'En Progreso', statusResolved: 'Resuelto',
+                    statusClosed: 'Cerrado', statusActive: 'Activo', statusInactive: 'Inactivo',
+                    priorityLow: 'Baja', priorityMedium: 'Media', priorityHigh: 'Alta', priorityUrgent: 'Urgente',
+                    themeLight: 'Claro', themeDark: 'Oscuro', themeSystem: 'Sistema',
+                }
+            };
+            function setLang(lang) {
+                if (CONFIG.dateLocaleMap[lang]) {
+                    currentLang = lang; localStorage.setItem('crmLangPreference', lang); updateUI();
+                } else { setLang(CONFIG.defaultLang); }
+            }
+            function translate(key) {
+                const langData = translations[currentLang] || translations[CONFIG.defaultLang];
+                let translated = langData[key] || langData[`status${key}`] || langData[`priority${key}`] || key;
+                // Helper to potentially add spaces before capital letters if key is like 'qualifiedLead'
+                if (key && key.length > 0 && key[0] === key[0].toUpperCase() && key.slice(1).some(c => c === c.toLowerCase())) {
+                    translated = translated.replace(/([A-Z])/g, ' $1').trim();
+                }
+                return translated;
+            }
+            function formatCurrency(value) {
+                const formatter = new Intl.NumberFormat(CONFIG.dateLocaleMap[currentLang], CONFIG.currencyFormatMap[currentLang]);
+                return formatter.format(value);
+            }
+            function formatNumber(value) {
+                 const formatter = new Intl.NumberFormat(CONFIG.dateLocaleMap[currentLang], CONFIG.numberFormatMap[currentLang]);
+                 return formatter.format(value);
+            }
+            function formatDate(date) {
+                 if (!date) return '';
+                 try {
+                    const formatter = new Intl.DateTimeFormat(CONFIG.dateLocaleMap[currentLang], CONFIG.dateFormatMap[currentLang]);
+                    return formatter.format(new Date(date));
+                 } catch (e) { return new Date(date).toLocaleString(); }
+            }
+            function updateUI() {
+                const langSelect = document.getElementById('language-selector');
+                if(langSelect) langSelect.value = currentLang;
+                const langSettingSelect = document.getElementById('setting-lang-select');
+                if(langSettingSelect) langSettingSelect.value = currentLang;
+
+                document.querySelectorAll('[data-i18n-text]').forEach(el => el.textContent = translate(el.dataset.i18nText));
+                document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = translate(el.dataset.i18nTitle));
+                document.querySelectorAll('input[placeholder]').forEach(el => {
+                    if(el.dataset.i18nPlaceholder) el.placeholder = translate(el.dataset.i18nPlaceholder);
+                 });
+                document.getElementById('page-title').textContent = translate(currentView || 'dashboard');
+            }
+            setLang(localStorage.getItem('crmLangPreference') || CONFIG.defaultLang);
+            return { setLang, translate, formatCurrency, formatNumber, formatDate, updateUI };
+        })();
+
+        // =========================================================================
+        // Módulo de Gerenciamento de Tema
+        // =========================================================================
+        const themeManager = (() => {
+            const bodyEl = document.body;
+            const prefersDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            function applyTheme(theme) {
+                currentTheme = theme; localStorage.setItem('crmThemePreference', theme);
+                if (theme === 'dark' || (theme === 'system' && prefersDarkQuery.matches)) {
+                    bodyEl.classList.add('dark-mode');
+                    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                } else {
+                    bodyEl.classList.remove('dark-mode');
+                    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                }
+                const themeSettingSelect = document.getElementById('setting-theme-select');
+                if (themeSettingSelect) themeSettingSelect.value = theme;
+            }
+            function setup() {
+                prefersDarkQuery.addEventListener('change', () => applyTheme(currentTheme));
+                themeToggle.addEventListener('click', () => {
+                    let newTheme = 'light';
+                    if (currentTheme === 'light') newTheme = 'dark';
+                    else if (currentTheme === 'dark') newTheme = 'system';
+                    applyTheme(newTheme);
+                });
+                document.getElementById('setting-theme-select')?.addEventListener('change', e => applyTheme(e.target.value));
+                applyTheme(currentTheme);
+            }
+            return { setup, applyTheme };
+        })();
+
+        // =========================================================================
+        // Módulo de Banco de Dados (IndexedDB) e Repositórios
+        // =========================================================================
+        const dbService = (() => {
+            let db = null;
+            const schemas = { customers: { keyPath: 'id' }, products: { keyPath: 'id' }, categories: { keyPath: 'id' }, brands: { keyPath: 'id' }, orders: { keyPath: 'id' }, orderItems: { keyPath: 'id' } };
+            const repositories = {};
+
+            function createRepository(storeName) {
+                return {
+                    store: null, name: storeName,
+                    init: function(transaction) { this.store = transaction.objectStore(storeName); },
+                    add: item => new Promise((res, rej) => { const req = this.store.add(item); req.onsuccess = e => res({ id: e.target.result, ...item }); req.onerror = e => rej(e.target.error); }),
+                    put: item => new Promise((res, rej) => { const req = this.store.put(item); req.onsuccess = e => res({ id: e.target.result || item.id, ...item }); req.onerror = e => rej(e.target.error); }),
+                    get: id => new Promise((res, rej) => { const req = this.store.get(id); req.onsuccess = e => res(e.target.result || null); req.onerror = e => rej(e.target.error); }),
+                    getAll: async (filters = {}, sortConfig = null) => {
+                         const req = this.store.getAll();
+                         return new Promise((resolve, reject) => {
+                            req.onsuccess = (event) => {
+                                let results = event.target.result || [];
+                                if (filters) {
+                                    results = results.filter(item => {
+                                        for (const key in filters) {
+                                             const filterValue = filters[key];
+                                             if (filterValue === '' || filterValue == null) continue;
+                                            const itemValue = item[key];
+                                            if (key.endsWith('Id')) { if (String(itemValue) !== String(filterValue)) return false; }
+                                            else if (typeof itemValue === 'string' && typeof filterValue === 'string') { if (!itemValue.toLowerCase().includes(filterValue.toLowerCase())) return false; }
+                                            else if (itemValue !== filterValue) return false;
+                                        }
+                                        return true;
+                                    });
+                                }
+                                if (sortConfig && sortConfig.column) {
+                                    results.sort((a, b) => {
+                                        const valA = a[sortConfig.column]; const valB = b[sortConfig.column];
+                                        if (valA == null) return sortConfig.dir === 'asc' ? 1 : -1;
+                                        if (valB == null) return sortConfig.dir === 'asc' ? -1 : 1;
+                                        if (typeof valA === 'number') return sortConfig.dir === 'asc' ? valA - valB : valB - valA;
+                                        return sortConfig.dir === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+                                    });
+                                }
+                                resolve(results);
+                            };
+                            req.onerror = reject;
+                         });
+                    },
+                    delete: id => new Promise((res, rej) => { const req = this.store.delete(id); req.onsuccess = e => res(e.target.result); req.onerror = e => rej(e.target.error); }),
+                    count: () => new Promise((res, rej) => { const req = this.store.count(); req.onsuccess = e => res(e.target.result); req.onerror = e => rej(e.target.error); }),
+                    deleteWhere: condition => new Promise(async (resolve, reject) => { // Helper for order items
+                         try {
+                             const allItems = await this.getAll();
+                             const itemsToDelete = allItems.filter(condition);
+                             const deletePromises = itemsToDelete.map(item => this.delete(item.id));
+                             await Promise.all(deletePromises);
+                             resolve();
+                         } catch (error) { reject(error); }
+                    })
+                };
+            }
+
+            function initDB() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(CONFIG.dbName, CONFIG.dbVersion);
+                    req.onupgradeneeded = event => {
+                        db = event.target.result;
+                        Object.keys(schemas).forEach(name => { if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, schemas[name]); });
+                        // Add indexes
+                        if (event.oldVersion < 2) {
+                            db.transaction.objectStore('products').createIndex('categoryId', 'categoryId'); db.transaction.objectStore('products').createIndex('brandId', 'brandId');
+                            db.transaction.objectStore('orders').createIndex('customerId', 'customerId'); db.transaction.objectStore('orders').createIndex('orderDate', 'orderDate');
+                            db.transaction.objectStore('orderItems').createIndex('orderId', 'orderId'); // Needed for fetching items
+                        }
+                        console.log(`DB ${CONFIG.dbName} upgraded to version ${event.newVersion}`);
+                    };
+                    req.onsuccess = event => {
+                        db = event.target.result;
+                        Object.keys(schemas).forEach(name => { repositories[name] = createRepository(name); repositories[name].init(db.transaction(name, 'readonly')); });
+                        dbStatusEl.textContent = 'Conectado'; dbStatusEl.className = 'ok';
+                        populateInitialData().then(() => resolve(db)).catch(reject);
+                    };
+                    req.onerror = event => { dbStatusEl.textContent = 'Erro'; dbStatusEl.className = 'error'; reject(event.target.error); };
+                    req.onblocked = () => { dbStatusEl.textContent = 'Bloqueado'; dbStatusEl.className = 'warning'; console.warn('DB Blocked'); };
+                });
+            }
+
+            function populateInitialData() {
+                return new Promise(async (resolve, reject) => {
+                    const productCount = await repositories.products?.count() || 0;
+                    if (productCount > 0) { console.log('Data exists, skipping population.'); return resolve(); }
+                    dbStatusEl.textContent = 'Populando...';
+                    console.log('Populating initial data...');
+
+                    // Base Data
+                    const categories = [{id: crypto.randomUUID(), name: 'Smartphones'}, {id: crypto.randomUUID(), name: 'Laptops'}, {id: crypto.randomUUID(), name: 'Acessórios'}];
+                    const brands = [{id: crypto.randomUUID(), name: 'TechBrand'}, {id: crypto.randomUUID(), name: 'ElectroCorp'}];
+                    await Promise.all([repositories.categories.add(categories[0]), repositories.categories.add(categories[1]), repositories.categories.add(categories[2]), repositories.brands.add(brands[0]), repositories.brands.add(brands[1])]);
+
+                    const categoryMap = Object.fromEntries(categories.map(c => [c.name, c.id]));
+                    const brandMap = Object.fromEntries(brands.map(b => [b.name, b.id]));
+
+                    // Products
+                    const products = [];
+                    for (let i = 1; i <= 50; i++) {
+                        const categoryId = categoryMap[categories[Math.floor(Math.random() * categories.length)].name];
+                        const brandId = brandMap[brands[Math.floor(Math.random() * brands.length)].name];
+                        products.push(repositories.products.add({
+                            id: crypto.randomUUID(), sku: `SKU${i}`, name: `Produto ${i}`, description: `Desc ${i}`,
+                            categoryId, brandId, price: parseFloat((Math.random() * 1500 + 50).toFixed(2)),
+                            cost: parseFloat((Math.random() * 0.7 + 0.1) * 500), stock: Math.floor(Math.random() * 200),
+                            createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString()
+                        }));
+                    }
+                    await Promise.all(products);
+
+                    // Customers
+                    const customers = [];
+                    for (let i = 1; i <= 100; i++) {
+                        customers.push(repositories.customers.add({
+                            id: crypto.randomUUID(), name: `Cliente ${i}`, email: `c${i}@example.com`,
+                            phone: `119${String(Math.floor(Math.random()*100000000)).padStart(8, '0')}`,
+                            address: `${i}ª Rua Fictícia`, status: Math.random() > 0.1 ? 'active' : 'inactive',
+                            createdAt: new Date(Date.now() - Math.random() * 730 * 24 * 60 * 60 * 1000).toISOString()
+                        }));
+                    }
+                    await Promise.all(customers);
+
+                    // Orders (~1000 orders)
+                    const orderPromises = []; const orderItemPromises = [];
+                    const startDate = new Date(Date.now() - 24 * 30 * 24 * 60 * 60 * 1000); // 24 months ago
+                    const productList = await repositories.products.getAll(); // Get products for order item generation
+
+                    for (let i = 0; i < 1000; i++) {
+                        const orderDate = generateSeasonalDate(startDate, new Date(), i, 1000);
+                        const customerId = customers[Math.floor(Math.random() * customers.length)]?.id;
+                        if (!customerId) continue;
+
+                        let orderSubtotal = 0;
+                        const numItems = Math.floor(Math.random() * 4) + 1;
+                        const currentOrderItems = [];
+
+                        for (let j = 0; j < numItems; j++) {
+                            const product = productList[Math.floor(Math.random() * productList.length)];
+                            if (!product) continue;
+                            const quantity = Math.floor(Math.random() * 3) + 1;
+                            const unitPrice = product.price;
+                            const itemSubtotal = quantity * unitPrice;
+                            orderSubtotal += itemSubtotal;
+                            const orderItemId = crypto.randomUUID();
+                            currentOrderItems.push({
+                                id: orderItemId, orderId: null, productId: product.id, quantity, unitPrice, subtotal: itemSubtotal,
+                            });
+                        }
+                        const discountPercent = Math.random() < 0.2 ? Math.floor(Math.random() * 15) : 0;
+                        const discountAmount = orderSubtotal * (discountPercent / 100);
+                        const tax = (orderSubtotal - discountAmount) * 0.10;
+                        const totalAmount = orderSubtotal - discountAmount + tax;
+
+                        orderPromises.push(
+                            repositories.orders.add({
+                                id: crypto.randomUUID(), customerId, orderDate: orderDate.toISOString(),
+                                status: ['pending', 'processing', 'shipped', 'delivered', 'canceled'][Math.floor(Math.random()*5)],
+                                totalAmount, createdAt: orderDate.toISOString(),
+                            }).then(order => {
+                                // Add order items linked to this order
+                                return Promise.all(currentOrderItems.map(item => {
+                                    item.orderId = order.id;
+                                    return repositories.orderItems.add(item);
+                                }));
+                            })
+                        );
+                    }
+                    await Promise.all(orderPromises);
+
+                    console.log('Initial data population complete.');
+                    dbStatusEl.textContent = 'Populado';
+                    resolve();
+                });
+            }
+
+            function generateSeasonalDate(startDate, endDate, index, totalCount) { // Simplified seasonality
+                const timeSpan = endDate - startDate;
+                const randomOffset = Math.random() * timeSpan;
+                let date = new Date(startDate.getTime() + randomOffset);
+                // Simple boost in Q4 (Oct-Dec)
+                if (date.getMonth() >= 9 && date.getMonth() <= 11 && Math.random() < 1.2) { /* Boost chance */ }
+                date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+                return date;
+            }
+
+            async function cacheAllData() {
+                try {
+                    allDataCache.categories = await repositories.categories?.getAll() || [];
+                    allDataCache.brands = await repositories.brands?.getAll() || [];
+                    allDataCache.customers = await repositories.customers?.getAll() || [];
+                    allDataCache.products = await repositories.products?.getAll() || [];
+                    allDataCache.orders = await repositories.orders?.getAll() || [];
+                    allDataCache.orderItems = await repositories.orderItems?.getAll() || [];
+                    console.log('Data cached.');
+                } catch (error) { console.error("Error caching data:", error); }
+            }
+
+            function exportToCsv(filename, data, type) {
+                 if (!data || data.length === 0) { Toastify({ text: 'Nenhum dado.', type: 'warning' }).showToast(); return; }
+                 const header = Object.keys(data[0]);
+                 // Modify header to show names instead of IDs where applicable
+                 const processedHeader = header.map(h => {
+                     if (h === 'categoryId' && type === 'products') return 'Categoria';
+                     if (h === 'brandId' && type === 'products') return 'Marca';
+                     if (h === 'customerId' && (type === 'orders')) return 'Cliente';
+                     if (h === 'productId' && type === 'orderItems') return 'Produto';
+                     return h.charAt(0).toUpperCase() + h.slice(1); // Capitalize
+                 });
+
+                 let csv = data.map(row => header.map(fieldName => {
+                     let val = row[fieldName];
+                     // Convert IDs to names for readability
+                     if (fieldName === 'categoryId' && type === 'products') val = allDataCache.categories?.find(c => c.id === val)?.name || val;
+                     else if (fieldName === 'brandId' && type === 'products') val = allDataCache.brands?.find(b => b.id === val)?.name || val;
+                     else if (fieldName === 'customerId' && (type === 'orders')) val = allDataCache.customers?.find(c => c.id === val)?.name || val;
+                     else if (fieldName === 'productId' && type === 'orderItems') val = allDataCache.products?.find(p => p.id === val)?.name || val;
+
+                     if (typeof val === 'string') { val = val.replace(/"/g, '""'); if (val.includes(',') || val.includes('\n') || val.includes('"')) val = `"${val}"`; }
+                     return val;
+                 }).join(',')).join('\n');
+                 csv = processedHeader.join(',') + '\n' + csv;
+                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                 const url = URL.createObjectURL(blob);
+                 const link = document.createElement('a');
+                 link.href = url; link.download = filename;
+                 document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+                 Toastify({ text: `Exportado: ${filename}`, type: 'success' }).showToast();
+            }
+            function importFromCsv(file, targetType) { Toastify({ text: 'Importação CSV não implementada nesta versão.', type: 'info' }).showToast(); }
+
+            async function resetDatabase() {
+                 return new Promise((resolve, reject) => {
+                     if (!db) { initDB().then(resolve).catch(reject); return; }
+                     db.close();
+                     const req = indexedDB.deleteDatabase(CONFIG.dbName);
+                     req.onsuccess = () => { console.log('DB Deleted'); db = null; initDB().then(resolve).catch(reject); };
+                     req.onerror = req.onblocked = (e) => { console.error('DB Delete Error:', e); reject(e); };
+                 });
+             }
+            function saveSnapshot() {
+                const dataToSave = {};
+                Object.keys(repositories).forEach(key => { dataToSave[key] = allDataCache[key] || []; });
+                const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a'); link.href = url; link.download = CONFIG.snapshotFileName;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+                Toastify({ text: 'Cenário salvo!', type: 'success' }).showToast();
+            }
+
+            // Add addMany for initial population
+            repositories.categories = createRepository('categories'); repositories.categories.addMany = items => Promise.all(items.map(i => repositories.categories.add(i)));
+            repositories.brands = createRepository('brands'); repositories.brands.addMany = items => Promise.all(items.map(i => repositories.brands.add(i)));
+            repositories.products = createRepository('products');
+            repositories.customers = createRepository('customers');
+            repositories.orders = createRepository('orders');
+            repositories.orderItems = createRepository('orderItems');
+
+            return { initDB, getRepo: name => repositories[name], cacheAllData, exportToCsv, importFromCsv, resetDatabase, saveSnapshot };
+        })();
+
+        // =========================================================================
+        // Módulo de Gerenciamento de UI e Views
+        // =========================================================================
+        const uiManager = (() => {
+            const views = ['dashboard', 'customers', 'products', 'orders', 'settings'];
+            let activeView = '';
+
+            function showView(viewName) {
+                if (activeView === viewName) return;
+                document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(viewName)?.classList.remove('hidden');
+                currentView = viewName;
+                i18n.updateUI();
+                updateViewControls(viewName);
+                loadViewContent(viewName);
+            }
+
+            function updateViewControls(viewName) {
+                 document.querySelectorAll('.controls-bar').forEach(bar => bar.classList.add('hidden'));
+                 document.querySelector(`#${viewName} .controls-bar`)?.classList.remove('hidden');
+                 updatePaginationControls(viewName);
+            }
+
+            function updatePaginationControls(viewName) {
+                 const state = paginationState[viewName] || {};
+                 const data = allDataCache[viewName] || [];
+                 const totalPages = Math.ceil(data.length / (state.pageSize || CONFIG.initialDataLoadSize)) || 1;
+                 const currentPage = state.page || 1;
+
+                 const paginationContainer = document.getElementById(`${viewName}-pagination`);
+                 if (!paginationContainer) return;
+
+                 paginationContainer.innerHTML = ''; // Clear previous
+
+                 if (data.length > (state.pageSize || CONFIG.initialDataLoadSize)) {
+                     const prevButton = document.createElement('button');
+                     prevButton.textContent = 'Anterior'; prevButton.disabled = currentPage === 1;
+                     prevButton.onclick = () => changePage(viewName, currentPage - 1);
+                     paginationContainer.appendChild(prevButton);
+
+                     paginationContainer.appendChild(document.createElement('span')).textContent = ` ${currentPage} / ${totalPages} `;
+
+                     const nextButton = document.createElement('button');
+                     nextButton.textContent = 'Próximo'; nextButton.disabled = currentPage === totalPages;
+                     nextButton.onclick = () => changePage(viewName, currentPage + 1);
+                     paginationContainer.appendChild(nextButton);
+
+                     const pageSizeSelect = document.createElement('select');
+                     [10, 25, 50].forEach(size => {
+                         const option = document.createElement('option');
+                         option.value = size; option.textContent = ` ${size} / página `;
+                         if (size === (state.pageSize || CONFIG.initialDataLoadSize)) option.selected = true;
+                         pageSizeSelect.appendChild(option);
+                     });
+                     pageSizeSelect.onchange = e => changePageSize(viewName, parseInt(e.target.value));
+                     paginationContainer.appendChild(pageSizeSelect);
+                     paginationContainer.style.display = 'flex';
+                 } else {
+                     paginationContainer.style.display = 'none';
+                 }
+            }
+
+            function changePage(viewName, newPage) {
+                paginationState[viewName] = { ...paginationState[viewName], page: newPage };
+                renderTable(viewName);
+                updatePaginationControls(viewName);
+            }
+             function changePageSize(viewName, newSize) {
+                paginationState[viewName] = { ...paginationState[viewName], pageSize: newSize, page: 1 };
+                renderTable(viewName);
+                updatePaginationControls(viewName);
+            }
+
+            function handleInitialView() {
+                const hash = window.location.hash || '#dashboard';
+                showView(hash.substring(1));
+            }
+
+            async function loadViewContent(viewName) {
+                if (viewName === 'dashboard') {
+                    loadDashboardCharts();
+                    updateDashboardMetrics();
+                } else if (TabulatorInstances[viewName]) {
+                    fetchAndRenderTable(viewName);
+                } else {
+                    // Initialize components for the view
+                    if (viewName === 'customers') initCustomersTable();
+                    else if (viewName === 'products') initProductsTable();
+                    else if (viewName === 'orders') initOrdersTable();
+                }
+            }
+
+            return { showView, handleInitialView, updatePaginationControls, changePage, changePageSize };
+        })();
+
+        // =========================================================================
+        // Módulo de Formulários e Modais
+        // =========================================================================
+        const formManager = (() => {
+            function openModal(modalId, data = {}, viewContext) {
+                const modal = document.getElementById(modalId);
+                const form = modal?.querySelector('form');
+                if (!modal || !form) return;
+
+                form.reset();
+                modal.querySelector('.modal-header h2').textContent = i18n.translate(`modalTitle${viewContext.charAt(0).toUpperCase() + viewContext.slice(1)}${data.id ? 'Edit' : 'New'}`);
+
+                form.querySelectorAll('input, select, textarea').forEach(field => {
+                    const fieldName = field.id.replace(`${viewContext}-`, '').replace('item-', '').replace('deal-', '').replace('ticket-','').replace('order-','').replace('product-','').replace('customer-','');
+                    const dataValue = data[fieldName];
+
+                    if (field.type === 'hidden' && field.id.endsWith('-id')) field.value = data.id || '';
+                    else if (field.type === 'datetime-local' || field.type === 'date') {
+                        if (dataValue) { const dateObj = new Date(dataValue); if (!isNaN(dateObj)) field.value = dateObj.toISOString().slice(0, field.type === 'datetime-local' ? 16 : 10); }
+                    } else if (field.tagName === 'SELECT') {
+                        field.value = dataValue || '';
+                        if (field.dataset.loadOptionsFor) loadSelectOptions(field.dataset.loadOptionsFor, dataValue);
+                    } else if (dataValue !== undefined && dataValue !== null && !field.readOnly) { field.value = dataValue; }
+                    else if (field.readOnly && field.id.endsWith('-display')) {
+                        const displayEl = field;
+                        if (field.id.includes('Price') || field.id.includes('Amount') || field.id.includes('Value')) displayEl.textContent = i18n.formatCurrency(dataValue);
+                        else if (field.id.toLowerCase().includes('probability')) displayEl.textContent = `${i18n.formatNumber(dataValue)}%`;
+                        else displayEl.textContent = dataValue;
+                    }
+                });
+
+                // Special Handling
+                if (viewContext === 'order' && data.items) renderOrderItems(data.items);
+                if (viewContext === 'order') calculateOrderTotals();
+                if (viewContext === 'customer' && data.createdAt) document.getElementById('customer-createdAt').value = data.createdAt.slice(0,16);
+                if (viewContext === 'product' && data.createdAt) document.getElementById('product-createdAt').value = data.createdAt.slice(0,16);
+
+
+                const deleteButton = modal.querySelector('button[data-action="delete"]');
+                 if (deleteButton) deleteButton.style.display = data.id ? 'inline-block' : 'none';
+
+                modal.showModal();
+            }
+
+            function handleDelete(itemId, repoName, viewContext) {
+                if (!confirm(i18n.translate('confirmDelete'))) return;
+                dbService.getRepo(repoName).delete(itemId).then(() => {
+                    Toastify({ text: i18n.translate('dataDeleted'), type: 'success' }).showToast();
+                    initApp(); // Refresh data
+                    document.getElementById(`modal-${viewContext}`)?.close();
+                }).catch(err => {
+                    Toastify({ text: `Erro ao excluir: ${err.message}`, type: 'error' }).showToast();
+                });
+            }
+
+            function renderOrderItems(items) {
+                const listContainer = document.getElementById('order-items-list');
+                if (!listContainer) return;
+                listContainer.innerHTML = '';
+                 const products = allDataCache.products || [];
+                if (!items || items.length === 0) { listContainer.innerHTML = '<div class="order-item empty">Nenhum item.</div>'; return; }
+
+                items.forEach((item, index) => {
+                    const product = products.find(p => p.id === item.productId) || { name: item.productId };
+                    const row = document.createElement('div'); row.className = 'order-item';
+                    row.dataset.itemId = item.id; row.dataset.productId = item.productId;
+                    row.innerHTML = `
+                        <span class="item-product-name">${product.name}</span>
+                        <span class="item-quantity">${item.quantity}</span>
+                        <span class="item-unit-price">${i18n.formatCurrency(item.unitPrice)}</span>
+                        <span class="item-subtotal">${i18n.formatCurrency(item.subtotal)}</span>
+                        <span class="item-actions">
+                            <button class="edit-order-item" data-index="${index}" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="remove-order-item" data-index="${index}" title="Remover"><i class="fas fa-trash-alt"></i></button>
+                        </span>`;
+                    listContainer.appendChild(row);
+                });
+                listContainer.querySelectorAll('.edit-order-item').forEach(btn => btn.onclick = handleEditOrderItem);
+                listContainer.querySelectorAll('.remove-order-item').forEach(btn => btn.onclick = handleRemoveOrderItem);
+            }
+
+            function handleEditOrderItem(e) {
+                 const index = parseInt(e.target.dataset.index);
+                 const row = e.target.closest('.order-item');
+                 const itemId = row.dataset.itemId;
+                 const productId = row.dataset.productId;
+                 const quantity = parseInt(row.querySelector('.item-quantity').textContent);
+                 const unitPrice = parseFloat(row.querySelector('.item-unit-price').textContent.replace(/[^0-9.]/g, ''));
+                 openModal('modal-order-item', { id: itemId, productId, quantity, unitPrice }, 'order-item');
+            }
+            function handleRemoveOrderItem(e) {
+                const row = e.target.closest('.order-item');
+                row.remove();
+                calculateOrderTotals();
+            }
+
+             function calculateOrderTotals() {
+                 const items = document.querySelectorAll('#order-items-list .order-item');
+                 let subtotal = 0;
+                 items.forEach(row => {
+                     const quantity = parseInt(row.querySelector('.item-quantity').textContent);
+                     const unitPrice = parseFloat(row.querySelector('.item-unit-price').textContent.replace(/[^0-9.]/g, ''));
+                     const itemSubtotal = quantity * unitPrice;
+                     row.querySelector('.item-subtotal').textContent = i18n.formatCurrency(itemSubtotal);
+                     subtotal += itemSubtotal;
+                 });
+                 const discountPercentInput = document.getElementById('order-discount');
+                 const discountPercent = parseFloat(discountPercentInput.value || '0');
+                 const discountAmount = subtotal * (discountPercent / 100);
+                 const tax = (subtotal - discountAmount) * 0.10;
+                 const totalAmount = subtotal - discountAmount + tax;
+                 document.getElementById('order-subtotal-display').textContent = i18n.formatCurrency(subtotal);
+                 document.getElementById('order-discount-amount-display').textContent = i18n.formatCurrency(discountAmount);
+                 document.getElementById('order-tax-display').textContent = i18n.formatCurrency(tax);
+                 document.getElementById('order-total-display').textContent = i18n.formatCurrency(totalAmount);
+             }
+
+            function loadSelectOptions(type, selectedValue = null) {
+                const selectElement = document.querySelector(`select[data-load-options-for="${type}"], #${type}-category, #${type}-brand, #${type}-customer-id, #${type}-order-id, #${type}-channel, #item-product-id`);
+                if (!selectElement) return;
+                const firstOptionHTML = selectElement.querySelector('option')?.outerHTML || '';
+                selectElement.innerHTML = firstOptionHTML; // Clear and keep placeholder
+                const data = allDataCache[type] || [];
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    let label = item.name || item.subject || item.sku || item.id || 'N/A';
+                    if (type === 'products') label = `${item.name} (${item.sku}) - ${i18n.formatCurrency(item.price)}`;
+                    if (type === 'customers') label = `${item.name} (${item.email})`;
+                    if (type === 'orders') label = `Pedido #${item.id?.substring(0,6)}`;
+                    option.value = item.id || item.status || item.priority || '';
+                    option.textContent = label;
+                    if (item.id === selectedValue || label === selectedValue) option.selected = true;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            return { openModal, handleDelete, calculateOrderTotals, loadSelectOptions };
+        })();
+
+        // =========================================================================
+        // Funções de Carregamento e Renderização de Tabelas (Tabulator)
+        // =========================================================================
+        const tableRenderers = {
+            actionButtons: (cell, context) => {
+                const id = cell.getRow().getData().id;
+                return `<div class="table-actions-cell">
+                           <button class="action-button edit-row" data-action="edit" data-id="${id}" title="Editar"><i class="fas fa-edit"></i></button>
+                           <button class="action-button duplicate-row" data-action="duplicate" data-id="${id}" title="Duplicar"><i class="fas fa-copy"></i></button>
+                           <button class="action-button delete-row danger" data-action="delete" data-id="${id}" title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                        </div>`;
+            },
+            lookupFormatter: (cell, type, field) => { const id = cell.getValue(); const data = allDataCache[type]?.find(item => item.id === id); return data ? data[field] : (id || ''); },
+            linkFormatter: (cell, type, length) => { const id = cell.getValue(); const view = type.toLowerCase(); return `<a href="#${view}" class="table-link ${type.toLowerCase()}-detail-link" data-id="${id}">${id?.substring(0, length) || 'N/A'}</a>`; },
+            statusFormatter: (cell) => {
+                 const status = cell.getValue(); const priority = cell.getRow()?.getData()?.priority; // Get priority for tickets
+                 let text = i18n.translate(`status${status}`) || status;
+                 let colorClass = 'status-muted';
+                 switch (status) {
+                     case 'active': case 'pending': case 'open': colorClass = 'status-warning'; break;
+                     case 'inactive': case 'resolved': case 'closed': colorClass = 'status-muted'; break;
+                     case 'processing': case 'in_progress': colorClass = 'status-primary'; break;
+                     case 'shipped': case 'waiting_customer': colorClass = 'status-accent'; break;
+                     case 'delivered': colorClass = 'status-success'; break;
+                     case 'canceled': colorClass = 'status-danger'; break;
+                     case 'low': colorClass = 'status-secondary'; break; // Assuming secondary maps to low priority
+                     case 'medium': colorClass = 'status-accent'; break;
+                     case 'high': colorClass = 'status-warning'; break;
+                     case 'urgent': colorClass = 'status-danger'; break;
+                 }
+                 // Adjust text for priority if the column is 'priority'
+                 if(cell.getColumn().getField() === 'priority') text = i18n.translate(`priority${status}`);
+                 return `<span class="${colorClass}">${text}</span>`;
+            }
+        };
+
+        function initTable(tableName, columns) {
+             if (TabulatorInstances[tableName]) return;
+             const tableContainer = document.getElementById(`${tableName}-table`);
+             if (!tableContainer) return;
+
+             const sortConfig = paginationState[tableName]?.sort || { column: columns[0]?.field || 'name', dir: 'asc' };
+             const pageSize = paginationState[tableName]?.pageSize || CONFIG.initialDataLoadSize;
+
+             TabulatorInstances[tableName] = new Tabulator(tableContainer, {
+                 columns: columns, layout: "fitColumns", pagination: "local",
+                 paginationSize: pageSize, paginationInitialPage: 1,
+                 dataFiltered: (filters, rows) => { // Update cache and state on filter
+                     allDataCache[tableName] = rows.map(row => row.getData());
+                     paginationState[tableName] = { ...paginationState[tableName], filters, page: 1, pageSize: tableContainer.getPageSize() };
+                     uiManager.updatePaginationControls(tableName);
+                 },
+                 dataSorted: (sorter, column, dir) => { // Update state on sort
+                     paginationState[tableName] = { ...paginationState[tableName], sort: { column: column.getField(), dir: dir }, page: 1 };
+                 },
+                 rowFormatter: row => { // Basic row styling
+                     const data = row.getData(); const element = row.getElement();
+                     if (data.stock < 10 && tableName === 'products') element.style.backgroundColor = 'rgba(255, 193, 7, 0.1)'; // Low stock warning
+                     if (data.status === 'inactive' && tableName === 'customers') element.style.opacity = '0.6'; // Inactive customer dimming
+                     if (data.status === 'canceled' && tableName === 'orders') element.style.opacity = '0.7'; // Canceled order dimming
+                 },
+                 locale: true, // Enable Tabulator localization
+                 langs: { "pt-BR": { columns: columns.reduce((acc, col) => { acc[col.field] = col.title; return acc; }, {}) } },
+                 tooltipGenerationMode: "hover"
+             });
+             TabulatorInstances[tableName].setSort(sortConfig.column, sortConfig.dir);
+             fetchAndRenderTable(tableName);
+        }
+
+        function fetchAndRenderTable(tableName) {
+            const repo = dbService.getRepo(tableName);
+            if (!repo) { document.getElementById(`${tableName}-table`).innerHTML = `<p>${i18n.translate('noData')}</p>`; return; }
+
+            const state = paginationState[tableName] || {};
+            const filters = { ...(state.filters || {}) }; // Clone filters
+
+             // Add filters from header inputs/selects
+             const searchInput = document.getElementById(`${tableName}-search`);
+             if (searchInput && searchInput.value.trim()) {
+                 const searchTerm = searchInput.value.trim();
+                 let searchKey = 'name'; // Default search key
+                 if (tableName === 'orders') searchKey = 'customerId'; // Search by customer name via join? Or ID? Let's use ID lookup for simplicity.
+                 if (tableName === 'customers') searchKey = 'name';
+                 if (tableName === 'products') searchKey = 'name';
+
+                 filters[searchKey] = searchTerm;
+             }
+             const statusFilter = document.getElementById(`${tableName}-filter-status`);
+             if (statusFilter && statusFilter.value) {
+                 const filterKey = tableName === 'tickets' ? 'priority' : 'status'; // Special handling for tickets
+                 filters[filterKey] = statusFilter.value;
+             }
+             const categoryFilter = document.getElementById('product-filter-category');
+             if(categoryFilter && categoryFilter.value) filters['categoryId'] = categoryFilter.value;
+             const brandFilter = document.getElementById('product-filter-brand');
+             if(brandFilter && brandFilter.value) filters['brandId'] = brandFilter.value;
+
+             const sortConfig = state.sort || { column: 'name', dir: 'asc' };
+             if (tableName === 'orders') sortConfig.column = state.sort?.column || 'orderDate'; // Default sort for orders
+
+             repo.getAll(filters, sortConfig).then(data => {
+                 allDataCache[tableName] = data;
+                 renderTable(tableName, data);
+                 uiManager.updatePaginationControls(tableName);
+             }).catch(err => { console.error(`Error fetching ${tableName}:`, err); });
+        }
+
+        function renderTable(tableName, data) {
+            const tabulatorInstance = TabulatorInstances[tableName];
+            if (!tabulatorInstance) return;
+            const state = paginationState[tableName] || {};
+            const startIndex = (state.page - 1) * (state.pageSize || CONFIG.initialDataLoadSize);
+            const endIndex = startIndex + (state.pageSize || CONFIG.initialDataLoadSize);
+            tabulatorInstance.setData(data.slice(startIndex, endIndex), true);
+        }
+
+        // Initialize Tables
+        function initCustomersTable() { initTable('customers', [
+            { title: "Nome", field: "name", headerFilter: "input", headerFilterPlaceholder: "Buscar nome...", widthGrow: 2, formatter: cell => tableRenderers.lookupFormatter(cell, 'customers', 'name') },
+            { title: "Email", field: "email", visible: false },
+            { title: "Status", field: "status", width: 100, hozAlign: "center", formatter: tableRenderers.statusFormatter },
+            { title: "Cadastrado em", field: "createdAt", width: 160, formatter: i18n.formatDate, sorter: "date" },
+            { title: "Ações", formatter: cell => tableRenderers.actionButtons(cell, 'customer'), headerSort: false, hozAlign: "center", width: 120 }
+        ]); }
+        function initProductsTable() { initTable('products', [
+            { title: "SKU", field: "sku", width: 120 },
+            { title: "Nome", field: "name", headerFilter: "input", headerFilterPlaceholder: "Buscar nome...", widthGrow: 2, formatter: cell => tableRenderers.lookupFormatter(cell, 'products', 'name') },
+            { title: "Categoria", field: "categoryId", formatter: cell => tableRenderers.lookupFormatter(cell, 'categories', 'name'), headerFilter: "select", headerFilterParams: { values: async () => loadFilterOptions('categories', 'categoryId') } },
+            { title: "Marca", field: "brandId", formatter: cell => tableRenderers.lookupFormatter(cell, 'brands', 'name'), headerFilter: "select", headerFilterParams: { values: async () => loadFilterOptions('brands', 'brandId') } },
+            { title: "Preço", field: "price", hozAlign: "right", formatter: "money", formatterParams:{decimal:",", thousand:"."}, sorter: "number", width: 100 },
+            { title: "Estoque", field: "stock", hozAlign: "center", sorter: "number", width: 80 },
+            { title: "Ações", formatter: cell => tableRenderers.actionButtons(cell, 'product'), headerSort: false, hozAlign: "center", width: 120 }
+        ]); }
+        function initOrdersTable() { initTable('orders', [
+            { title: "ID Pedido", field: "id", width: 100, formatter: cell => tableRenderers.linkFormatter(cell, 'orders', 8) },
+            { title: "Cliente", field: "customerId", formatter: cell => tableRenderers.lookupFormatter(cell, 'customers', 'name'), widthGrow: 1.5, headerFilter: "select", headerFilterParams: { values: async () => loadFilterOptions('customers', 'customerId'), placeholder:"Filtrar cliente..." } },
+            { title: "Data", field: "orderDate", width: 160, formatter: i18n.formatDate, sorter: "date" },
+            { title: "Status", field: "status", width: 110, hozAlign: "center", formatter: tableRenderers.statusFormatter },
+            { title: "Valor Total", field: "totalAmount", hozAlign: "right", formatter: "money", formatterParams:{decimal:",", thousand:"."}, sorter: "number", width: 120 },
+            { title: "Ações", formatter: cell => tableRenderers.actionButtons(cell, 'order'), headerSort: false, hozAlign: "center", width: 120 }
+        ]); }
+
+        function loadFilterOptions(type, fieldName) {
+             const data = allDataCache[type] || [];
+             const options = [{ label: i18n.translate('filter') || "Todos", value: "" }];
+             data.forEach(item => {
+                 let label = item.name || item.subject || item.sku || item.id || 'N/A';
+                 if (type === 'products') label = `${item.name} (${item.sku})`;
+                 if (type === 'customers') label = `${item.name} (${item.email})`;
+                 if (type === 'orders') label = `Pedido #${item.id?.substring(0,6)}`;
+                 options.push({ label: label, value: item.id || item.status || item.priority || '' });
+             });
+             const commonStatuses = ['pending', 'processing', 'shipped', 'delivered', 'canceled', 'open', 'in_progress', 'resolved', 'closed', 'active', 'inactive'];
+             if (fieldName === 'status' && !data.some(d=>d.status)) commonStatuses.forEach(s => { if (!options.some(opt => opt.value === s)) options.push({ label: i18n.translate(`status${s}`), value: s }); });
+             if (fieldName === 'priority' && !data.some(d=>d.priority)) ['low', 'medium', 'high', 'urgent'].forEach(p => { if (!options.some(opt => opt.value === p)) options.push({ label: i18n.translate(`priority${p}`), value: p }); });
+             options.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+             return options;
+         }
+
+        // =========================================================================
+        // Funções de Gráficos (Chart.js)
+        // =========================================================================
+        async function loadDashboardCharts() {
+            chartStatusEl.textContent = 'Carregando...';
+            await dbService.cacheAllData();
+            await fetchAndRenderTable('orders');
+            renderRevenueByChannelChart();
+            renderDailySalesChart();
+            renderTopProductsTable();
+            chartStatusEl.textContent = 'Carregados';
+        }
+
+        function renderChart(ctxId, type, data, options) {
+            const ctx = document.getElementById(ctxId);
+            if (!ctx) return;
+            if (ChartInstances[ctxId]) ChartInstances[ctxId].destroy();
+            const chartData = { labels: data.labels || [], datasets: [{ data: data.values || [], backgroundColor: data.colors || [], borderColor: data.colors?.[0] || 'var(--primary-color)' }] };
+            const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, ...options };
+            if (type === 'line' || type === 'bar') {
+                chartData.datasets[0].label = data.label || '';
+                chartData.datasets[0].fill = type === 'line';
+                 chartOptions.scales = { y: { beginAtZero: true, ticks: { callback: function(value) { return i18n.formatCurrency(value); } } } };
+                 chartOptions.plugins.tooltip = { callbacks: { label: function(context) { return `${context.dataset.label}: ${i18n.formatCurrency(context.raw)}`; } } };
+            }
+            ChartInstances[ctxId] = new Chart(ctx, { type, data: chartData, options: chartOptions });
+        }
+
+        function renderRevenueByChannelChart() {
+            const orders = allDataCache.orders || []; const channels = allDataCache.channels || [];
+            const channelRevenue = {};
+            orders.forEach(o => { const c = channels.find(ch => ch.id === o.channelId); const name = c ? c.name : 'Desconhecido'; channelRevenue[name] = (channelRevenue[name] || 0) + o.totalAmount; });
+            const labels = Object.keys(channelRevenue); const values = Object.values(channelRevenue);
+            renderChart('revenueByChannelChart', 'pie', { labels, values, colors: ['#007bff', '#6c757d', '#ffc107', '#28a745'] });
+        }
+
+        function renderDailySalesChart() {
+            const salesByDate = {}; const orders = allDataCache.orders || [];
+            const today = new Date(); const thirtyDaysAgo = new Date(today); thirtyDaysAgo.setDate(today.getDate() - 30);
+            orders.forEach(o => { const d = new Date(o.orderDate); if (d >= thirtyDaysAgo && d <= today) { const dateKey = i18n.formatDate(d).split(' ')[0]; salesByDate[dateKey] = (salesByDate[dateKey] || 0) + o.totalAmount; }});
+            const labels = []; let d = new Date(thirtyDaysAgo); while (d <= today) { labels.push(i18n.formatDate(d).split(' ')[0]); d.setDate(d.getDate() + 1); }
+            const values = labels.map(l => salesByDate[l] || 0);
+            renderChart('dailySalesChart', 'line', { labels, values, colors: ['#007bff'], label: 'Vendas Diárias' });
+        }
+
+        function renderTopProductsTable() {
+            const productsData = allDataCache.products || [];
+            const productSales = {}; // { productId: { name, quantity, revenue } }
+             productsData.slice(0, 5).forEach((p, i) => { // Mocking top 5 products
+                 productSales[p.id] = { name: p.name, quantity: Math.floor(Math.random() * 50) + 10, revenue: parseFloat((Math.random() * 10000 + 500).toFixed(2)) };
+             });
+            const sortedProducts = Object.values(productSales);
+            const columns = [{title:"Produto", field:"name", widthGrow:2}, {title:"Qtd", field:"quantity", width:80}, {title:"Receita", field:"revenue", formatter:"money", formatterParams:{decimal:",", thousand:"."}, width:120}];
+            if (TabulatorInstances.topProducts) TabulatorInstances.topProducts.destroy();
+            TabulatorInstances.topProducts = new Tabulator(document.getElementById('top-products-table'), { columns, data: sortedProducts, layout: "fitColumns", placeholder: i18n.translate('noData') });
+        }
+
+        // =========================================================================
+        // Funções Auxiliares e Inicialização
+        // =========================================================================
+        function updateDashboardMetrics() {
+            const orders = allDataCache.orders || []; const customers = allDataCache.customers || [];
+            let totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+            let totalUnitsSold = Math.floor(Math.random() * 500) + 100; // Mock
+            let avgTicket = orders.length > 0 ? totalRevenue / orders.length : 0;
+            let grossMarginPercent = 25; // Mock
+            let returnRate = 5; // Mock
+            let estCAC = avgTicket * 0.5; // Mock
+            let simpleLTV = avgTicket * 10; // Mock
+
+            document.getElementById('metric-total-revenue').textContent = i18n.formatCurrency(totalRevenue);
+            document.getElementById('metric-avg-ticket').textContent = i18n.formatCurrency(avgTicket);
+            document.getElementById('metric-units-sold').textContent = totalUnitsSold;
+            document.getElementById('metric-gross-margin').textContent = i18n.formatNumber(grossMarginPercent) + '%';
+            document.getElementById('metric-return-rate').textContent = i18n.formatNumber(returnRate) + '%';
+            document.getElementById('metric-cac').textContent = i18n.formatCurrency(estCAC);
+            document.getElementById('metric-ltv').textContent = i18n.formatCurrency(simpleLTV);
+        }
+
+        // --- PWA Setup ---
+        function registerServiceWorker() {
+            if (!navigator.serviceWorker) { swStatusEl.textContent = 'Não suportado'; return; }
+            // Create a Blob for the service worker script
+            const swCode = `
+                const CACHE_VERSION = 'crm-v1'; const OFFLINE_URL = '/offline.html'; // Placeholder
+                const CORE_ASSETS = ['/', '/index.html', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', 'https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/Toastify.min.css', 'https://cdnjs.cloudflare.com/ajax/libs/tabulator-tables/5.5.2/css/tabulator.min.css', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/tabulator-tables/5.5.2/js/tabulator.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/Toastify.min.js'];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll([...CORE_ASSETS, OFFLINE_URL])).then(self.skipWaiting)));
+                self.addEventListener('activate', e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(key => key !== CACHE_VERSION).map(key => caches.delete(key)))).then(self.clients.claim)));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).then(netRes => caches.open(CACHE_VERSION).then(c => c.put(e.request, netRes.clone())).then(() => netRes).catch(() => caches.match(OFFLINE_URL))))));
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl, { scope: '/', type: 'module' })
+                .then(reg => {
+                    swStatusEl.textContent = 'Registrado'; swStatusEl.className = 'ok';
+                    reg.onupdatefound = () => {
+                        Toastify({ text: 'Atualização disponível! Recarregue para aplicar.', onClick: () => window.location.reload(), duration: 7000, gravity: "top", position: "center" }).showToast();
+                    };
+                }).catch(err => { swStatusEl.textContent = 'Erro Registro'; swStatusEl.className = 'error'; console.error('SW Error:', err); });
+        }
+
+        // --- Test Panel ---
+        testPanelToggle.addEventListener('click', () => { testPanel.classList.toggle('visible'); testPanelToggle.style.right = testPanel.classList.contains('visible') ? '-30px' : '-80px'; });
+        resetDbButton.addEventListener('click', async () => { if (confirm(i18n.translate('confirmDelete') + ' ' + i18n.translate('dbReset') + '?')) { await dbService.resetDatabase(); window.location.reload(); } });
+        reloadPageButton.addEventListener('click', () => window.location.reload());
+        downloadExampleCsvButton.addEventListener('click', () => {
+            const exampleData = [{ id: crypto.randomUUID(), name: "Exemplo Cliente", email: "exemplo@email.com", status: "active", createdAt: new Date().toISOString() }];
+            dbService.exportToCsv('crm_exemplo_clientes.csv', exampleData, 'customers');
+        });
+        uploadFakeDataInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) dbService.importFromCsv(f, prompt("Tipo de dado (customers, products)?")); e.target.value = ''; });
+        saveSnapshotButton.addEventListener('click', dbService.saveSnapshot);
+
+        // --- View Navigation ---
+        sidebarLinks.forEach(link => link.addEventListener('click', e => {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            uiManager.showView(href.substring(1));
+            window.location.hash = href;
+        }));
+        window.addEventListener('hashchange', () => uiManager.handleInitialView());
+
+        // --- Click Handlers for Table Actions ---
+        document.body.addEventListener('click', async (e) => {
+            const target = e.target.closest('button');
+            if (!target) return;
+            const action = target.dataset.action;
+            const id = target.dataset.id;
+            const viewContext = currentView;
+            const repoName = viewContext === 'deal' ? 'deals' : `${viewContext}s`; // Handle 'deal' repo name if pipeline was included
+
+            if (action === 'edit') {
+                 try {
+                     const itemData = await dbService.getRepo(repoName).get(id);
+                     if (itemData) {
+                         formManager.openModal(`modal-${viewContext}`, itemData, viewContext);
+                         if (viewContext === 'order') {
+                             const items = await dbService.getRepo('orderItems').getAll({ orderId: id });
+                             formManager.renderOrderItems(items || []);
+                             formManager.calculateOrderTotals();
+                         }
+                     } else { Toastify({ text: 'Item não encontrado.', type: 'warning' }).showToast(); }
+                 } catch (error) { Toastify({ text: `Erro ao carregar: ${error.message}`, type: 'error' }).showToast(); }
+            } else if (action === 'delete') {
+                 formManager.handleDelete(id, repoName, viewContext);
+            } else if (action === 'duplicate') {
+                 try {
+                     let itemData = await dbService.getRepo(repoName).get(id);
+                     if (itemData) {
+                         delete itemData.id; itemData.createdAt = new Date().toISOString();
+                         if (itemData.name) itemData.name = `(Cópia) ${itemData.name}`;
+                         await dbService.getRepo(repoName).add(itemData);
+                         Toastify({ text: 'Duplicado!', type: 'success' }).showToast();
+                         initApp();
+                     }
+                 } catch (error) { Toastify({ text: `Erro ao duplicar: ${error.message}`, type: 'error' }).showToast(); }
+            }
+        });
+
+        // --- Create New Item Buttons ---
+        document.getElementById('btn-create-customer')?.addEventListener('click', () => { formManager.openModal('modal-customer', { createdAt: new Date().toISOString() }, 'customer'); });
+        document.getElementById('btn-create-product')?.addEventListener('click', () => { formManager.openModal('modal-product', { createdAt: new Date().toISOString() }, 'product'); });
+        document.getElementById('btn-create-order')?.addEventListener('click', () => { formManager.openModal('modal-order', { orderDate: new Date().toISOString() }, 'order'); });
+        document.getElementById('btn-add-order-item')?.addEventListener('click', () => { formManager.openModal('modal-order-item', {}, 'order-item'); });
+
+        // --- CSV Import/Export ---
+        document.getElementById('btn-import-csv-cust')?.addEventListener('click', () => uploadFakeDataInput.click());
+        document.getElementById('btn-export-csv-cust')?.addEventListener('click', () => dbService.exportToCsv('customers_export.csv', allDataCache.customers, 'customers'));
+        document.getElementById('btn-import-csv-prod')?.addEventListener('click', () => uploadFakeDataInput.click());
+        document.getElementById('btn-export-csv-prod')?.addEventListener('click', () => dbService.exportToCsv('products_export.csv', allDataCache.products, 'products'));
+
+        // --- Initialize App ---
+        async function initApp() {
+            themeManager.setup();
+            await dbService.initDB();
+            await dbService.cacheAllData();
+            i18n.updateUI();
+            registerServiceWorker();
+            checkServiceWorker(); checkIndexedDB(); checkAccessibility();
+            uiManager.handleInitialView();
+            console.log("App Initialized");
+        }
+
+        // --- Accessibility Check ---
+        function checkAccessibility() {
+            let score = 0; const total = 4;
+            const hasFocusStyles = getComputedStyle(document.body).getPropertyValue('--primary-color') !== 'rgb(0, 123, 255)'; // Basic check
+            if (hasFocusStyles) score++;
+            if (document.querySelector('nav, main, section, header')) score++; // Semantic HTML
+            if (document.querySelectorAll('button[title], a[title], button[aria-label], a[aria-label]').length > 0) score++; // Accessible names
+            if (document.querySelectorAll('*:focus-visible').length > 0) score++; // Focus-visible usage
+            accStatusEl.textContent = `${score}/${total} verificados`;
+            accStatusEl.className = score >= 3 ? 'ok' : (score >= 2 ? 'warning' : 'error');
+        }
+        // --- Helper Functions ---
+        function checkServiceWorker() {
+            navigator.serviceWorker.getRegistration().then(reg => {
+                swStatusEl.textContent = reg ? 'Registrado' : 'Não Registrado';
+                swStatusEl.className = reg ? 'ok' : 'error';
+            }).catch(() => { swStatusEl.textContent = 'Erro Verif.'; swStatusEl.className = 'error'; });
+        }
+        function checkIndexedDB() {
+            if (dbInstance) { dbStatusEl.textContent = 'Conectado'; dbStatusEl.className = 'ok'; }
+            else if (typeof indexedDB !== 'undefined') { dbStatusEl.textContent = 'Erro Conexão'; dbStatusEl.className = 'error'; }
+            else { dbStatusEl.textContent = 'Indisponível'; dbStatusEl.className = 'error'; }
+        }
+
+        // Initialize the application when the DOM is ready
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
+```
